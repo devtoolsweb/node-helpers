@@ -5,7 +5,7 @@ export interface ISystemUtils {
 
 class SystemUtilsCtor implements ISystemUtils {
   readEnv (name: string, defaultValue?: string): string {
-    const e = this.safeReadEnv(name)
+    const e = process.env[name]
     if (typeof e === 'string') {
       return e
     } else if (defaultValue) {
