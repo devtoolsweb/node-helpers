@@ -1,23 +1,23 @@
 export interface ISystemUtils {
-  readEnv(name: string, defaultValue: string | null): string
-  safeReadEnv(name: string): string | null
+  readEnv(name: string, defaultValue?: string): string
+  safeReadEnv(name: string): string
 }
 
 class SystemUtilsCtor implements ISystemUtils {
-  readEnv (name: string, defaultValue: string | null = null): string {
+  readEnv (name: string, defaultValue?: string): string {
     const e = this.safeReadEnv(name)
     if (typeof e === 'string') {
       return e
+    } else if (defaultValue) {
+      return defaultValue
+    } else {
+      throw new Error(`Environment variable '${name}' doesn't exist`)
     }
-    if (defaultValue === null) {
-      throw new Error(`Unknown environment variable: '${name}'`)
-    }
-    return defaultValue
   }
 
-  safeReadEnv (name: string): string | null {
+  safeReadEnv (name: string): string {
     const e = process.env[name]
-    return typeof e === 'string' ? e : null
+    return typeof e === 'string' ? e : ''
   }
 }
 
