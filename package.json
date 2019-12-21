@@ -14,7 +14,7 @@
     "typescript": "latest"
   },
   "license": "MIT",
-  "name": "@aperos/node-tollkit",
+  "name": "@aperos/node-toolkit",
   "main": "dist/index.js",
   "scripts": {
     "build": "rollup -c && make-dts-bundle -b build",
