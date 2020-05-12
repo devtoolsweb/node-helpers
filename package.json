@@ -5,7 +5,9 @@
   },
   "description": "Helper TypeScript classes for use with Node.js",
   "devDependencies": {
-    "rollup": "latest",
+    "@rollup/plugin-commonjs": "latest",
+    "@rollup/plugin-node-resolve": "latest",
+    "rollup": "<=2.8.2",
     "rollup-plugin-dts": "latest",
     "rollup-plugin-terser": "latest",
     "rollup-plugin-typescript2": "latest",
