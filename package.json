@@ -16,7 +16,8 @@
   },
   "license": "MIT",
   "name": "@aperos/node-toolkit",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
   "scripts": {
     "build": "rollup -c",
     "build-production": "BUILD=production npm run build",
