@@ -3,7 +3,7 @@
   "dependencies": {
     "@types/node": "latest"
   },
-  "description": "Helper TypeScript classes for use with Node.js",
+  "description": "TypeScript helper classes for use with Node.js",
   "devDependencies": {
     "@rollup/plugin-commonjs": "latest",
     "@rollup/plugin-node-resolve": "latest",
