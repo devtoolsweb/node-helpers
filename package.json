@@ -1,12 +1,14 @@
 {
   "author": "<aperos.dev@gmail.com>",
   "dependencies": {
+    "@aperos/event-emitter": "latest",
     "@types/node": "latest"
   },
   "description": "TypeScript helper classes for use with Node.js",
   "devDependencies": {
     "@rollup/plugin-commonjs": "latest",
     "@rollup/plugin-node-resolve": "latest",
+    "builtin-modules": "latest",
     "rollup": "latest",
     "rollup-plugin-dts": "latest",
     "rollup-plugin-terser": "latest",
