@@ -1,4 +1,5 @@
 import { IBareRequest } from './bare_request'
+import { IBareResponse } from './bare_response'
 
 export interface IBareBackendRequestArgs<Req = {}> {
   alias: string
@@ -7,7 +8,7 @@ export interface IBareBackendRequestArgs<Req = {}> {
 
 export interface IBareBackend<
   Req extends IBareRequest = IBareRequest,
-  Res = {}
+  Res extends IBareResponse = IBareResponse
 > {
   readonly name?: string
   handleRequest(args: IBareBackendRequestArgs<Req>): Promise<Res>
@@ -21,7 +22,7 @@ export interface IBareBackendArgs {
 
 export abstract class BareBackend<
   Req extends IBareRequest = IBareRequest,
-  Res = {}
+  Res extends IBareResponse = IBareResponse
 > implements IBareBackend<Req, Res> {
   readonly name?: string
 

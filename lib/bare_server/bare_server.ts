@@ -7,6 +7,7 @@ import {
 } from '@aperos/event-emitter'
 import { IBareBackend } from './bare_backend'
 import { IBareRequest } from './bare_request'
+import { IBareResponse } from './bare_response'
 
 export type BareServerEnv = Record<string, string>
 
@@ -28,30 +29,33 @@ export interface IBareServerRequestEvent<
 
 export interface IBareServerResponseEvent<
   Req extends IBareRequest = IBareRequest,
-  Res = {}
+  Res extends IBareResponse = IBareResponse
 > extends IBareServerRequestEvent<Req> {
   readonly response: Res
 }
 
 export interface IBareServerEvents<
   Req extends IBareRequest = IBareRequest,
-  Res = {}
+  Res extends IBareResponse = IBareResponse
 > extends IBaseEvents {
   readonly error: (event: IBareServerErrorEvent<Req>) => void
   readonly request: (event: IBareServerRequestEvent<Req>) => void
   readonly response: (event: IBareServerResponseEvent<Req, Res>) => void
 }
 
-export interface IBareServer<Events extends IBaseEvents = IBaseEvents>
-  extends ITypedEventEmitter<Events> {
-  readonly backends: Map<string, IBareBackend>
+export interface IBareServer<
+  Req extends IBareRequest = IBareRequest,
+  Res extends IBareResponse = IBareResponse,
+  Events extends IBaseEvents = IBaseEvents
+> extends ITypedEventEmitter<Events> {
+  readonly backends: Map<string, IBareBackend<Req, Res>>
   readonly address: string
   readonly apiKeys?: Set<string>
   readonly env?: BareServerEnv
   readonly host: string
   readonly port: number
-  addBackend(m: IBareBackend, ...aliases: string[]): this
-  getBackend(alias: string): IBareBackend | undefined
+  addBackend(m: IBareBackend<Req, Res>, ...aliases: string[]): this
+  getBackend(alias: string): IBareBackend<Req, Res> | undefined
   start(): void
   stop(): void
 }
@@ -65,7 +69,7 @@ export interface IBareServerArgs {
 
 export interface IBareServerSendArgs<
   Req extends IBareRequest = IBareRequest,
-  Res = {}
+  Res extends IBareResponse = IBareResponse
 > {
   request: Req
   response: Res
@@ -88,16 +92,17 @@ export class BareUnauthenticatedRequestError extends Error {
 }
 
 export const BareServerMixin = <
-  Req extends IBareRequest = IBareRequest,
-  Res = {},
   TBase extends Constructor<{}> = Constructor<{}>,
+  Req extends IBareRequest = IBareRequest,
+  Res extends IBareResponse = IBareResponse,
   Events extends IBareServerEvents = IBareServerEvents
 >(
   Base: TBase
-): TBase & Constructor<IBareServer<Events>> => {
-  return class extends EventEmitterMixin<Events, TBase>(Base) {
+): TBase & Constructor<IBareServer<Req, Res, Events>> => {
+  return class extends EventEmitterMixin<Events, TBase>(Base)
+    implements IBareServer<Req, Res, Events> {
     readonly apiKeys?: Set<string>
-    readonly backends = new Map<string, IBareBackend>()
+    readonly backends = new Map<string, IBareBackend<Req, Res>>()
     readonly env: BareServerEnv
     readonly host: string
     readonly port: number
@@ -116,7 +121,7 @@ export const BareServerMixin = <
       return `${this.host}:${this.port}'`
     }
 
-    addBackend(backend: IBareBackend, ...aliases: string[]) {
+    addBackend(backend: IBareBackend<Req, Res>, ...aliases: string[]) {
       const xs = this.backends
       const s = backend.name || ''
       const a = [...aliases, ...(s ? [s] : [])]
@@ -147,11 +152,11 @@ export const BareServerMixin = <
       }
     }
 
-    findBackend(_request: Req): [string, IBareBackend] | undefined {
+    findBackend(_request: Req): [string, IBareBackend<Req, Res>] | undefined {
       return undefined
     }
 
-    getBackend(alias: string): IBareBackend | undefined {
+    getBackend(alias: string) {
       return this.backends.get(alias)
     }
 
