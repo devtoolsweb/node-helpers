@@ -7,6 +7,11 @@ import {
 import { IBareBackend } from './bare_backend'
 import { IBareRequest } from './bare_request'
 import { IBareResponse } from './bare_response'
+import {
+  BareBackendNotFoundError,
+  BareNotImplementedError,
+  BareUnauthenticatedRequestError
+} from './bare_errors'
 
 export type BareServerEnv = Record<string, string>
 
@@ -53,10 +58,19 @@ export interface IBareServer<
   readonly host: string
   readonly port: number
   addBackend(m: IBareBackend<Req, Res>, ...aliases: string[]): this
-  authenticateRequest(r: Req): Promise<boolean>
   getBackend(alias: string): IBareBackend | undefined
   start(): void
   stop(): void
+}
+
+export interface IBareServerInternals<
+  Req extends IBareRequest = IBareRequest,
+  Res extends IBareResponse = IBareResponse
+> {
+  authenticateRequest(r: Req): Promise<boolean>
+  handleRawRequest(args: IBareServerRawRequestArgs): Promise<void>
+  sendResponse(_args: IBareServerSendArgs<Req, Res>): Promise<void>
+  translateIncomingMessage(m: any): Req | undefined
 }
 
 export interface IBareServerArgs {
@@ -66,39 +80,34 @@ export interface IBareServerArgs {
   port: number
 }
 
+export interface IBareServerRawRequestArgs {
+  incomingMessage: any
+}
+
 export interface IBareServerSendArgs<
   Req extends IBareRequest = IBareRequest,
   Res extends IBareResponse = IBareResponse
 > {
   request: Req
   response: Res
-}
-
-export class BareBackendNotFoundError extends Error {
-  constructor(message?: string) {
-    super(message || 'Backend not found')
-  }
-}
-
-export class BareUnauthenticatedRequestError extends Error {
-  constructor(message?: string) {
-    super(message || 'Request is not authenticated')
-  }
-}
-
-export interface IBareServerConstructor<T> {
-  new (args: IBareServerArgs): T
+  rawRequestArgs: IBareServerRawRequestArgs
 }
 
 export const BareServerMixin = <
   TBase extends Constructor<{}> = Constructor<{}>,
   Req extends IBareRequest = IBareRequest,
   Res extends IBareResponse = IBareResponse,
-  Events extends IBareServerEvents<Req, Res> = IBareServerEvents<Req, Res>
+  Events extends IBaseEvents = IBaseEvents
 >(
   Base: TBase
-): TBase & Constructor<IBareServer<Req, Res>> => {
-  return class extends EventEmitterMixin<Events, TBase>(Base)
+): TBase &
+  Constructor<
+    IBareServer<Req, Res> &
+      IBareServerInternals<Req, Res> &
+      ITypedEventEmitter<Events>
+  > => {
+  return class MixedBareServer
+    extends EventEmitterMixin<Events & IBareServerEvents<Req, Res>, TBase>(Base)
     implements IBareServer<Req, Res> {
     readonly apiKeys?: Set<string>
     readonly backends = new Map<string, IBareBackend>()
@@ -145,7 +154,7 @@ export const BareServerMixin = <
     async dispatchRequest(request: Req) {
       const [alias, backend] = this.findBackend(request) || ['']
       if (backend) {
-        await backend.handleRequest({ alias, request })
+        return await backend.handleRequest({ alias, request })
       } else {
         throw new BareBackendNotFoundError()
       }
@@ -157,6 +166,19 @@ export const BareServerMixin = <
 
     getBackend(alias: string) {
       return this.backends.get(alias) as IBareBackend<Req, Res>
+    }
+
+    async handleRawRequest(rawRequestArgs: IBareServerRawRequestArgs) {
+      const request = this.translateIncomingMessage(
+        rawRequestArgs.incomingMessage
+      )
+      this.emit('request', { request, origin: this })
+      if (!(await this.authenticateRequest(request))) {
+        throw new BareUnauthenticatedRequestError()
+      } else {
+        const response = await this.dispatchRequest(request)
+        this.sendResponse({ request, response, rawRequestArgs })
+      }
     }
 
     async performStart() {}
@@ -177,6 +199,10 @@ export const BareServerMixin = <
       for (const b of this.backends.values()) {
         await b.stop()
       }
+    }
+
+    translateIncomingMessage(_m: any): Req {
+      throw new BareNotImplementedError()
     }
   }
 }
