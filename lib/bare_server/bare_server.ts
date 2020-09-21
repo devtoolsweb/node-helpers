@@ -2,7 +2,6 @@ import { Constructor } from '@aperos/ts-goodies'
 import {
   EventEmitterMixin,
   IBaseEvents,
-  ITypedEvent,
   ITypedEventEmitter
 } from '@aperos/event-emitter'
 import { IBareBackend } from './bare_backend'
@@ -11,9 +10,9 @@ import { IBareResponse } from './bare_response'
 
 export type BareServerEnv = Record<string, string>
 
-export interface IBareServerEvent<
-  Events extends IBareServerEvents = IBareServerEvents
-> extends ITypedEvent<Events> {}
+export interface IBareServerEvent {
+  readonly origin: IBareServer
+}
 
 export interface IBareServerErrorEvent<Req extends IBareRequest = IBareRequest>
   extends IBareServerEvent {
@@ -46,16 +45,16 @@ export interface IBareServerEvents<
 export interface IBareServer<
   Req extends IBareRequest = IBareRequest,
   Res extends IBareResponse = IBareResponse,
-  Events extends IBaseEvents = IBaseEvents
+  Events extends IBareServerEvents<Req, Res> = IBareServerEvents<Req, Res>
 > extends ITypedEventEmitter<Events> {
-  readonly backends: Map<string, IBareBackend<Req, Res>>
   readonly address: string
   readonly apiKeys?: Set<string>
   readonly env?: BareServerEnv
   readonly host: string
   readonly port: number
   addBackend(m: IBareBackend<Req, Res>, ...aliases: string[]): this
-  getBackend(alias: string): IBareBackend<Req, Res> | undefined
+  authenticateRequest(r: Req): Promise<boolean>
+  getBackend(alias: string): IBareBackend | undefined
   start(): void
   stop(): void
 }
@@ -75,10 +74,6 @@ export interface IBareServerSendArgs<
   response: Res
 }
 
-export interface IBareServerConstructor<T = {}> {
-  new (args: IBareServerArgs): IBareServer & T
-}
-
 export class BareBackendNotFoundError extends Error {
   constructor(message?: string) {
     super(message || 'Backend not found')
@@ -91,18 +86,22 @@ export class BareUnauthenticatedRequestError extends Error {
   }
 }
 
+export interface IBareServerConstructor<T> {
+  new (args: IBareServerArgs): T
+}
+
 export const BareServerMixin = <
   TBase extends Constructor<{}> = Constructor<{}>,
   Req extends IBareRequest = IBareRequest,
   Res extends IBareResponse = IBareResponse,
-  Events extends IBareServerEvents = IBareServerEvents
+  Events extends IBareServerEvents<Req, Res> = IBareServerEvents<Req, Res>
 >(
   Base: TBase
-): TBase & Constructor<IBareServer<Req, Res, Events>> => {
+): TBase & Constructor<IBareServer<Req, Res>> => {
   return class extends EventEmitterMixin<Events, TBase>(Base)
-    implements IBareServer<Req, Res, Events> {
+    implements IBareServer<Req, Res> {
     readonly apiKeys?: Set<string>
-    readonly backends = new Map<string, IBareBackend<Req, Res>>()
+    readonly backends = new Map<string, IBareBackend>()
     readonly env: BareServerEnv
     readonly host: string
     readonly port: number
@@ -157,7 +156,7 @@ export const BareServerMixin = <
     }
 
     getBackend(alias: string) {
-      return this.backends.get(alias)
+      return this.backends.get(alias) as IBareBackend<Req, Res>
     }
 
     async performStart() {}
