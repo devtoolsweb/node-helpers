@@ -172,12 +172,13 @@ export const BareServerMixin = <
       const request = this.translateIncomingMessage(
         rawRequestArgs.incomingMessage
       )
-      this.emit('request', { request, origin: this })
+      this.emit('request', { origin: this, request })
       if (!(await this.authenticateRequest(request))) {
         throw new BareUnauthenticatedRequestError()
       } else {
         const response = await this.dispatchRequest(request)
-        this.sendResponse({ request, response, rawRequestArgs })
+        await this.sendResponse({ request, response, rawRequestArgs })
+        this.emit('response', { origin: this, request, response })
       }
     }
 
