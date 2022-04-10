@@ -1,6 +1,23 @@
-# @aperos/node-toolkit
+# @devtoolsweb/node-toolkit
 
-TypeScript helper classes for use with Node.js.
+A variety of utilities designed for use on the backend.
 
-The development branch can contain experimental code that is under
-active development and should not be used for production environments.
+Warning: This package may contain experimental code that is under development and should not be used in production environments.
+
+## Pre-requisites
+
+- Install the latest stable version of [Node.js](https://nodejs.org/en/)
+
+## Installation
+
+```
+yarn install @devtoolsweb/node-helpers
+```
+
+## Usage
+
+See own description for each class.
+
+## License
+
+[MIT](https://github.com/devtoolsweb/node-helpers/blob/master/LICENSE)
