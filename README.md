@@ -1,6 +1,6 @@
 # @devtoolsweb/node-toolkit
 
-A set of packages from DevToolsWeb and utilities intended for use on the backend.
+A variety of utilities designed for use on the backend.
 
 Warning: This package may contain experimental code that is under development and should not be used in production environments.
 
