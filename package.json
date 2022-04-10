@@ -1,0 +1,36 @@
+{
+  "author": "<elhombre.dev@gmail.com>",
+  "dependencies": {
+    "@types/node": "latest",
+    "@types/pino-multi-stream": "latest",
+    "pino-multi-stream": "latest",
+    "pino": "latest",
+    "reflect-metadata": "latest",
+    "typedi": "latest"
+  },
+  "description": "TypeScript helper classes for use with Node.js",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "latest",
+    "@rollup/plugin-node-resolve": "latest",
+    "builtin-modules": "latest",
+    "rollup": "latest",
+    "rollup-plugin-dts": "latest",
+    "rollup-plugin-terser": "latest",
+    "rollup-plugin-typescript2": "latest",
+    "ts-node": "latest",
+    "typescript": "latest"
+  },
+  "license": "MIT",
+  "name": "@devtoolsweb/node-helpers",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "scripts": {
+    "build": "rollup -c",
+    "build-production": "BUILD=production npm run build",
+    "clean": "rm -rf build dist",
+    "test-server": "ts-node examples/test_server",
+    "prepare": "npm run clean && npm run build-production"
+  },
+  "types": "dist/index.d.ts",
+  "version": "0.1.1"
+}
